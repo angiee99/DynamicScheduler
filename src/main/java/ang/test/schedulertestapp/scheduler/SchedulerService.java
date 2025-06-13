@@ -4,6 +4,10 @@ import org.springframework.scheduling.support.CronExpression;
 
 import java.util.UUID;
 
+/**
+ * The service handles the scheduling of tasks.
+ * It should enable scheduling on-demand and reoccurring tasks on the run, as well as cancelling and updating them.
+ */
 public interface SchedulerService {
     // on demand with no initial delay
     void scheduleOnDemandTask(UUID taskId, Runnable taskLogic);

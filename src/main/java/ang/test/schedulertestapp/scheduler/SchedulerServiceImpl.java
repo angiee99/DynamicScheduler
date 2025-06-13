@@ -18,12 +18,18 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Service that manages task scheduling - creation, cancellation, updates.
+ * It stores the scheduled tasks in a {@link ConcurrentHashMap} in format of {@link ScheduledFuture} instances.
+ * It should also take care of limiting the task execution with the use of {@link ang.test.schedulertestapp.timeout.TimeoutWrapper}.
+ */
 @Service
 public class SchedulerServiceImpl implements SchedulerService{
     private final TaskScheduler taskScheduler;
     private final Map<UUID, ScheduledFuture<?>> scheduledTasks = new ConcurrentHashMap<>();
     private final long defaultTimeout;
     private final TimeUnit defaultTimeoutUnit;
+
     @Autowired
     public SchedulerServiceImpl(
             ThreadPoolTaskScheduler threadPoolTaskScheduler,
@@ -34,10 +40,13 @@ public class SchedulerServiceImpl implements SchedulerService{
         this.defaultTimeoutUnit = defaultTimeoutUnit;
     }
 
-    // TODO -> a mechanism for reading tasks from DB at application start is still required
+    // TODO -> integrate a mechanism for reading tasks from DB at application start is still required
+    // in some future controller - create the task DB entity, store it AND use the same DB id to store it internally in the map
+    // operations like get, list and get status will take place only on DB level
+    // create, update, delete, cancel task -> DB and Scheduler
+    // delete and cancel will be mapped to cancel in Scheduler logic
 
     // TODO per task -> wrapping the tasks for timeout handling
-    // TODO per task -> if needed, persist the task, e.g. to DB
 
     @Override
     public void scheduleOnDemandTask(UUID taskId, Runnable taskLogic) {
