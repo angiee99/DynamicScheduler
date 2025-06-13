@@ -1,4 +1,4 @@
-package ang.test.app;
+package ang.test.schedulertestapp;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
