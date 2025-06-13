@@ -12,11 +12,12 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
         basePackageClasses={SchedulerTestAppApplication.class})
 public class ThreadPoolTaskSchedulerConfig {
 
-    @Bean
+    @Bean(destroyMethod = "shutdown")
     public ThreadPoolTaskScheduler threadPoolTaskScheduler(){
         ThreadPoolTaskScheduler threadPoolTaskScheduler = new ThreadPoolTaskScheduler();
         threadPoolTaskScheduler.setPoolSize(5);
         threadPoolTaskScheduler.setThreadNamePrefix("scheduled-task");
+        threadPoolTaskScheduler.initialize();
         return threadPoolTaskScheduler;
     }
 }
