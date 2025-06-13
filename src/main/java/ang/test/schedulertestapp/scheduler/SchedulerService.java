@@ -11,5 +11,6 @@ public interface SchedulerService {
     // on demand with the initial delay in Cron format
     void scheduleOnDemandTask(UUID taskId, Runnable taskLogic, CronExpression delay);
 
-    // TODO scheduled task with Cron
+    // scheduled task with Cron
+    void scheduleCronTask(UUID taskId, Runnable taskLogic, CronExpression expression);
 }

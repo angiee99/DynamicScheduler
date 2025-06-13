@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.scheduling.support.CronExpression;
+import org.springframework.scheduling.support.CronTrigger;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -59,6 +60,15 @@ public class SchedulerServiceImpl implements SchedulerService{
         // schedule the task with delay as the cron was provided
         ScheduledFuture<?> future = taskScheduler.schedule(taskLogic, Instant.now().plus(
                 durationBetweenExecutions));
+
+        // store the task locally for dynamic changes
+        scheduledTasks.put(taskId, future);
+    }
+
+    @Override
+    public void scheduleCronTask(UUID taskId, Runnable taskLogic, CronExpression expression) {
+        // schedule the task with delay as the cron was provided
+        ScheduledFuture<?> future = taskScheduler.schedule(taskLogic, new CronTrigger(expression.toString()));
 
         // store the task locally for dynamic changes
         scheduledTasks.put(taskId, future);

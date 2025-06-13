@@ -3,7 +3,8 @@ package ang.test.schedulertestapp;
 import java.util.Date;
 
 public class TestTask  implements Runnable{
-    private String message;
+    private final String message;
+    private int counter = 0; // counter of run calls basically
 
     public TestTask(String message){
         this.message = message;
@@ -14,5 +15,10 @@ public class TestTask  implements Runnable{
         System.out.println(new Date()
                 +" Runnable Task with "+ message
                 +" on thread "+Thread.currentThread().getName());
+        counter++;
+    }
+
+    public int getCounter() {
+        return counter;
     }
 }
