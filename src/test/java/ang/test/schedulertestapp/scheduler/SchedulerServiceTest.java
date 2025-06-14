@@ -16,6 +16,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(properties = {"task.timeout.value=4", "task.timeout.unit=SECONDS"})
 @ExtendWith(OutputCaptureExtension.class)
+// todo add order still
 class SchedulerServiceTest {
     @Autowired
     private SchedulerService schedulerService;
@@ -101,7 +102,7 @@ class SchedulerServiceTest {
         assertTrue(capturedOutput.getAll().contains(message));
 
         assertTrue(schedulerService.cancelTask(taskId));
-        assertTrue(capturedOutput.getAll().contains("Task with id " + taskId + " was cancelled"));
+        assertTrue(capturedOutput.getAll().contains("task with id " + taskId + " was cancelled"));
 
         // wait to check if the task does not fire and is truly canceled
         Thread.sleep(2000);
@@ -121,7 +122,7 @@ class SchedulerServiceTest {
 
         // cancel the task while it is running
         assertTrue(schedulerService.cancelTask(taskId));
-        assertTrue(capturedOutput.getAll().contains("Task with id " + taskId + " was cancelled"));
+        assertTrue(capturedOutput.getAll().contains("task with id " + taskId + " was cancelled"));
 
         // check if the interrupt was caught inside the long-running task
         assertTrue(capturedOutput.getAll().contains("Task interrupted"));
