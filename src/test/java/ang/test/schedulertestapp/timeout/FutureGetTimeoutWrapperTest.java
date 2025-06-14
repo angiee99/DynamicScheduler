@@ -27,7 +27,7 @@ public class FutureGetTimeoutWrapperTest {
 
     @Test
     @Order(1)
-    void taskFinishesBeforeTimeout1(CapturedOutput capturedOutput) {
+    void taskFinishesBeforeTimeout(CapturedOutput capturedOutput) {
         String message = "Apfel Shorle";
         Runnable runnable = futureGetTimeoutWrapper.wrap(new TestTask(message), 2, TimeUnit.SECONDS);
         runnable.run();

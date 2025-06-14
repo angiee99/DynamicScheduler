@@ -84,7 +84,7 @@ public class SchedulerServiceImpl implements SchedulerService{
         // schedule the task with delay as the cron was provided
         ScheduledFuture<?> future = taskScheduler.schedule(
                 // this wraps every cron fire
-                () -> { timeoutWrapper.wrap(taskLogic, defaultTimeout, defaultTimeoutUnit).run(); },
+                () -> timeoutWrapper.wrap(taskLogic, defaultTimeout, defaultTimeoutUnit).run(),
                 new CronTrigger(expression.toString()));
         // store the task locally for dynamic changes
         scheduledTasks.put(taskId, future);
