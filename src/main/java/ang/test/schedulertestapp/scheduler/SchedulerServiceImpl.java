@@ -36,8 +36,8 @@ public class SchedulerServiceImpl implements SchedulerService{
     @Autowired
     public SchedulerServiceImpl(
             ThreadPoolTaskScheduler threadPoolTaskScheduler,
-            @Qualifier("futureGetTimeoutWrapper") TimeoutWrapper timeoutWrapper,
-            @Value("${task.timeout.value:10}") long defaultTimeout,
+            @Qualifier("nonBlockingTimeoutWrapper") TimeoutWrapper timeoutWrapper,
+            @Value("${task.timeout.value:60}") long defaultTimeout,
             @Value("#{T(java.util.concurrent.TimeUnit).SECONDS}") TimeUnit defaultTimeoutUnit) {
         this.taskScheduler = threadPoolTaskScheduler;
         this.timeoutWrapper = timeoutWrapper;
@@ -83,8 +83,8 @@ public class SchedulerServiceImpl implements SchedulerService{
     public void scheduleCronTask(UUID taskId, Runnable taskLogic, CronExpression expression) {
         // schedule the task with delay as the cron was provided
         ScheduledFuture<?> future = taskScheduler.schedule(
-                () -> { // this wraps every cron fire
-                    timeoutWrapper.wrap(taskLogic, defaultTimeout, defaultTimeoutUnit).run();},
+                // this wraps every cron fire
+                () -> { timeoutWrapper.wrap(taskLogic, defaultTimeout, defaultTimeoutUnit).run(); },
                 new CronTrigger(expression.toString()));
         // store the task locally for dynamic changes
         scheduledTasks.put(taskId, future);

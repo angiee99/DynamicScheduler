@@ -36,10 +36,12 @@ public class NonBlockingTimeoutWrapperTest {
 
     @Test
     @Order(2)
-    void taskTimesOutNonBlocking(CapturedOutput capturedOutput) {
+    void taskTimesOutNonBlocking(CapturedOutput capturedOutput) throws InterruptedException {
         String message = "Zhyvchick";
         Runnable runnable = nonBlockingTimeoutWrapper.wrap(new LongRunningTask(message), 2, TimeUnit.SECONDS);
         runnable.run();
+        // wait for the timeout to fire
+        Thread.sleep(2500);
         // verify the start of the task execution
         assertTrue(capturedOutput.getAll().contains(message));
         // check if the task actually did timeout

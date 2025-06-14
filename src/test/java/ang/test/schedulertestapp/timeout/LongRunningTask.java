@@ -2,10 +2,10 @@ package ang.test.schedulertestapp.timeout;
 
 import java.util.Date;
 
-class LongRunningTask implements Runnable {
+public class LongRunningTask implements Runnable {
     private final String message;
 
-    LongRunningTask(String message) {
+    public LongRunningTask(String message) {
         this.message = message;
     }
 

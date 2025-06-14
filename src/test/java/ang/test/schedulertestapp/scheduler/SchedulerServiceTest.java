@@ -1,6 +1,7 @@
 package ang.test.schedulertestapp.scheduler;
 
 import ang.test.schedulertestapp.TestTask;
+import ang.test.schedulertestapp.timeout.LongRunningTask;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,7 +15,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@SpringBootTest
+@SpringBootTest(properties = {"task.timeout.value=3", "task.timeout.unit=SECONDS"})
 @ExtendWith(OutputCaptureExtension.class)
 class SchedulerServiceTest {
     @Autowired
@@ -70,5 +71,23 @@ class SchedulerServiceTest {
         // wait for a task to run for the second time
         Thread.sleep(2000); // wait 2 seconds for the next run to check periodic execution
         assertEquals(2, task.getCounter());
+    }
+
+    @Test
+    @Order(4)
+    void scheduleLongTask(CapturedOutput capturedOutput) throws InterruptedException {
+        String message = "Long running task";
+        LongRunningTask task = new LongRunningTask(message);
+        schedulerService.scheduleOnDemandTask(UUID.randomUUID(), task);
+
+        // waiting for the timeout to fire
+        Thread.sleep(4000);
+        // check that the execution has started
+        assertTrue(capturedOutput.getAll().contains(message));
+
+        // check if the task actually did timeout
+        assertTrue(capturedOutput.getAll().contains("Task timed out"));
+        // check if the interrupt was caught inside the long-running task
+        assertTrue(capturedOutput.getAll().contains("Task interrupted"));
     }
 }

@@ -24,9 +24,9 @@ public class SchedulerConfig {
         return threadPoolTaskScheduler;
     }
 
-    @Bean(destroyMethod = "shutdown")
+    @Bean()
     public ScheduledExecutorService scheduledThreadPool() {
-        return Executors.newScheduledThreadPool(2);
+        return Executors.newScheduledThreadPool(4); // not sure in pool size here
     }
 
     @Bean(destroyMethod = "shutdown")
