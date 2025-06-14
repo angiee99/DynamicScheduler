@@ -64,11 +64,11 @@ class SchedulerServiceTest {
                 CronExpression.parse("*/2 * * * * *")); // every 2 seconds
 
         // wait for a task to run for the first time
-        Thread.sleep(2500);
+        Thread.sleep(2000);
         assertTrue(capturedOutput.getAll().contains(message));
 
         // wait for a task to run for the second time
-        Thread.sleep(2500); // wait 2.5 seconds for the next run to check periodic execution
+        Thread.sleep(2000); // wait 2 seconds for the next run to check periodic execution
         assertEquals(2, task.getCounter());
     }
 }

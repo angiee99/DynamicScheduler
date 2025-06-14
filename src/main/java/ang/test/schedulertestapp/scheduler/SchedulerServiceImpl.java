@@ -1,7 +1,9 @@
 package ang.test.schedulertestapp.scheduler;
 
+import ang.test.schedulertestapp.timeout.TimeoutWrapper;
 import jakarta.annotation.PreDestroy;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
@@ -21,11 +23,12 @@ import java.util.concurrent.TimeUnit;
 /**
  * Service that manages task scheduling - creation, cancellation, updates.
  * It stores the scheduled tasks in a {@link ConcurrentHashMap} in format of {@link ScheduledFuture} instances.
- * It should also take care of limiting the task execution with the use of {@link ang.test.schedulertestapp.timeout.TimeoutWrapper}.
+ * It should also take care of limiting the task execution with the use of {@link TimeoutWrapper}.
  */
 @Service
 public class SchedulerServiceImpl implements SchedulerService{
     private final TaskScheduler taskScheduler;
+    private final TimeoutWrapper timeoutWrapper;
     private final Map<UUID, ScheduledFuture<?>> scheduledTasks = new ConcurrentHashMap<>();
     private final long defaultTimeout;
     private final TimeUnit defaultTimeoutUnit;
@@ -33,9 +36,11 @@ public class SchedulerServiceImpl implements SchedulerService{
     @Autowired
     public SchedulerServiceImpl(
             ThreadPoolTaskScheduler threadPoolTaskScheduler,
-            @Value("${task.timeout.value:1}") long defaultTimeout,
+            @Qualifier("futureGetTimeoutWrapper") TimeoutWrapper timeoutWrapper,
+            @Value("${task.timeout.value:10}") long defaultTimeout,
             @Value("#{T(java.util.concurrent.TimeUnit).SECONDS}") TimeUnit defaultTimeoutUnit) {
         this.taskScheduler = threadPoolTaskScheduler;
+        this.timeoutWrapper = timeoutWrapper;
         this.defaultTimeout = defaultTimeout;
         this.defaultTimeoutUnit = defaultTimeoutUnit;
     }
@@ -45,13 +50,12 @@ public class SchedulerServiceImpl implements SchedulerService{
     // operations like get, list and get status will take place only on DB level
     // create, update, delete, cancel task -> DB and Scheduler
     // delete and cancel will be mapped to cancel in Scheduler logic
-
-    // TODO per task -> wrapping the tasks for timeout handling
-
     @Override
     public void scheduleOnDemandTask(UUID taskId, Runnable taskLogic) {
         // schedule the task with no delay
-        ScheduledFuture<?> future = taskScheduler.schedule(taskLogic, Instant.now());
+        ScheduledFuture<?> future = taskScheduler.schedule(
+                timeoutWrapper.wrap(taskLogic, defaultTimeout, defaultTimeoutUnit),
+                Instant.now());
 
         // store the task locally for dynamic changes
         scheduledTasks.put(taskId, future);
@@ -67,8 +71,9 @@ public class SchedulerServiceImpl implements SchedulerService{
                 nextExecution, nextToNextExecution
         );
         // schedule the task with delay as the cron was provided
-        ScheduledFuture<?> future = taskScheduler.schedule(taskLogic, Instant.now().plus(
-                durationBetweenExecutions));
+        ScheduledFuture<?> future = taskScheduler.schedule(
+                timeoutWrapper.wrap(taskLogic, defaultTimeout, defaultTimeoutUnit),
+                Instant.now().plus(durationBetweenExecutions));
 
         // store the task locally for dynamic changes
         scheduledTasks.put(taskId, future);
@@ -77,8 +82,10 @@ public class SchedulerServiceImpl implements SchedulerService{
     @Override
     public void scheduleCronTask(UUID taskId, Runnable taskLogic, CronExpression expression) {
         // schedule the task with delay as the cron was provided
-        ScheduledFuture<?> future = taskScheduler.schedule(taskLogic, new CronTrigger(expression.toString()));
-
+        ScheduledFuture<?> future = taskScheduler.schedule(
+                () -> { // this wraps every cron fire
+                    timeoutWrapper.wrap(taskLogic, defaultTimeout, defaultTimeoutUnit).run();},
+                new CronTrigger(expression.toString()));
         // store the task locally for dynamic changes
         scheduledTasks.put(taskId, future);
     }
