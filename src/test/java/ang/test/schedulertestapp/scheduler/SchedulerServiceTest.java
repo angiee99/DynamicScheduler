@@ -90,4 +90,27 @@ class SchedulerServiceTest {
         // check if the interrupt was caught inside the long-running task
         assertTrue(capturedOutput.getAll().contains("Task interrupted"));
     }
+
+    @Test
+    @Order(5)
+    void cancelCronTaskTest(CapturedOutput capturedOutput) throws InterruptedException {
+        String message = "Cron task";
+        TestTask task = new TestTask(message);
+        UUID taskId = UUID.randomUUID();
+        schedulerService.scheduleCronTask(
+                taskId,
+                task,
+                CronExpression.parse("*/2 * * * * *")); // every 2 seconds
+
+        // wait for a task to run for the first time
+        Thread.sleep(2000);
+        assertTrue(capturedOutput.getAll().contains(message));
+
+        assertTrue(schedulerService.cancelTask(taskId));
+        assertTrue(capturedOutput.getAll().contains("Task with id " + taskId + " was cancelled"));
+
+        // wait to check if the task does not fire and is truly canceled
+        Thread.sleep(2000);
+        assertEquals(1, task.getCounter());
+    }
 }

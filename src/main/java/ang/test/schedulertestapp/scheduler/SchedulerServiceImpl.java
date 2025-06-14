@@ -45,7 +45,7 @@ public class SchedulerServiceImpl implements SchedulerService{
         this.defaultTimeoutUnit = defaultTimeoutUnit;
     }
 
-    // TODO -> integrate a mechanism for reading tasks from DB at application start is still required
+    // TODO -> integrating a mechanism for reading tasks from DB at application start is still required
     // in some future controller - create the task DB entity, store it AND use the same DB id to store it internally in the map
     // operations like get, list and get status will take place only on DB level
     // create, update, delete, cancel task -> DB and Scheduler
@@ -88,6 +88,18 @@ public class SchedulerServiceImpl implements SchedulerService{
                 new CronTrigger(expression.toString()));
         // store the task locally for dynamic changes
         scheduledTasks.put(taskId, future);
+    }
+
+    @Override
+    public boolean cancelTask(UUID taskId) {
+        ScheduledFuture<?> future = scheduledTasks.get(taskId);
+        if (future != null) {
+            future.cancel(true);
+            System.out.println("Task with id " + taskId + " was cancelled");
+            scheduledTasks.remove(taskId);
+            return true;
+        }
+        return false;
     }
 
     @PreDestroy

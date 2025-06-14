@@ -17,4 +17,8 @@ public interface SchedulerService {
 
     // scheduled task with Cron
     void scheduleCronTask(UUID taskId, Runnable taskLogic, CronExpression expression);
+
+    // cancel the task
+    boolean cancelTask(UUID taskId);
+    // todo update the task
 }
