@@ -10,9 +10,14 @@ public class NonBlockingTimeoutWrapper implements TimeoutWrapper{
         return () -> {
             try (ScheduledExecutorService executor = Executors.newScheduledThreadPool(2)) {
                 Future<?> future = executor.submit(runnable);
-                Runnable cancelTask = () -> future.cancel(true);
+                Runnable cancelTask = () -> {
+                    future.cancel(true);
+                    if(future.isCancelled()){
+                        System.out.println("Task timed out. CancelTask is called");
+                    }
+                };
 
-                executor.schedule(cancelTask, 3000, TimeUnit.MILLISECONDS);
+                executor.schedule(cancelTask, timeout, timeUnit);
                 executor.shutdown();
             }
         };

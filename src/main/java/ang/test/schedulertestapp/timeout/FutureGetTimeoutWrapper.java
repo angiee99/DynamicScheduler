@@ -15,8 +15,9 @@ public class FutureGetTimeoutWrapper implements TimeoutWrapper{
                     // limit the wait for the result
                     future.get(timeout, timeUnit);
                 } catch (TimeoutException | InterruptedException e) {
-                    System.out.println("Task timed out with exception: " + e.getClass() + e.getMessage());
+                    System.out.println("Task timed out with exception: " + e.getClass());
                     future.cancel(true);
+                    // ? should we throw sth here
                 } catch (Exception e) {
                     System.out.println("Task ended with exception: " + e.getClass() + e.getMessage());
                     e.printStackTrace();
