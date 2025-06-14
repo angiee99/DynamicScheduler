@@ -13,16 +13,16 @@ public class NonBlockingTimeoutWrapper implements TimeoutWrapper{
     }
 
     @Override
-    public Runnable wrap(Runnable runnable, long timeout, TimeUnit timeUnit) {
-        return () -> {
-            Future<?> future = executor.submit(runnable);
+    public Future<?> wrap(Runnable runnable, long timeout, TimeUnit timeUnit) {
+        Future<?> future = executor.submit(runnable);
 
-            executor.schedule(() -> {
-                if (!future.isDone()) {
-                    future.cancel(true);
-                    System.out.println("Task timed out. CancelTask is called");
-                }
-            }, timeout, timeUnit);
-        };
+        executor.schedule(() -> {
+            if (!future.isDone()) {
+                future.cancel(true);
+                System.out.println("Task timed out. CancelTask is called");
+            }
+        }, timeout, timeUnit);
+
+        return future;
     }
 }

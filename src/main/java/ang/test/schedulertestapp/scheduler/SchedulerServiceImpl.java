@@ -17,6 +17,7 @@ import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -29,7 +30,7 @@ import java.util.concurrent.TimeUnit;
 public class SchedulerServiceImpl implements SchedulerService{
     private final TaskScheduler taskScheduler;
     private final TimeoutWrapper timeoutWrapper;
-    private final Map<UUID, ScheduledFuture<?>> scheduledTasks = new ConcurrentHashMap<>();
+    private final Map<UUID, Future<?>> scheduledTasks = new ConcurrentHashMap<>();
     private final long defaultTimeout;
     private final TimeUnit defaultTimeoutUnit;
 
@@ -53,9 +54,7 @@ public class SchedulerServiceImpl implements SchedulerService{
     @Override
     public void scheduleOnDemandTask(UUID taskId, Runnable taskLogic) {
         // schedule the task with no delay
-        ScheduledFuture<?> future = taskScheduler.schedule(
-                timeoutWrapper.wrap(taskLogic, defaultTimeout, defaultTimeoutUnit),
-                Instant.now());
+        Future<?> future = timeoutWrapper.wrap(taskLogic, defaultTimeout, defaultTimeoutUnit);
 
         // store the task locally for dynamic changes
         scheduledTasks.put(taskId, future);
@@ -72,7 +71,7 @@ public class SchedulerServiceImpl implements SchedulerService{
         );
         // schedule the task with delay as the cron was provided
         ScheduledFuture<?> future = taskScheduler.schedule(
-                timeoutWrapper.wrap(taskLogic, defaultTimeout, defaultTimeoutUnit),
+                (Runnable) timeoutWrapper.wrap(taskLogic, defaultTimeout, defaultTimeoutUnit),
                 Instant.now().plus(durationBetweenExecutions));
 
         // store the task locally for dynamic changes
@@ -84,7 +83,7 @@ public class SchedulerServiceImpl implements SchedulerService{
         // schedule the task with delay as the cron was provided
         ScheduledFuture<?> future = taskScheduler.schedule(
                 // this wraps every cron fire
-                () -> timeoutWrapper.wrap(taskLogic, defaultTimeout, defaultTimeoutUnit).run(),
+                () -> timeoutWrapper.wrap(taskLogic, defaultTimeout, defaultTimeoutUnit),
                 new CronTrigger(expression.toString()));
         // store the task locally for dynamic changes
         scheduledTasks.put(taskId, future);
@@ -92,7 +91,7 @@ public class SchedulerServiceImpl implements SchedulerService{
 
     @Override
     public boolean cancelTask(UUID taskId) {
-        ScheduledFuture<?> future = scheduledTasks.get(taskId);
+        Future<?> future = scheduledTasks.get(taskId);
         if (future != null) {
             future.cancel(true);
             System.out.println("Task with id " + taskId + " was cancelled");

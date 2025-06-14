@@ -2,7 +2,6 @@ package ang.test.schedulertestapp.scheduler;
 
 import ang.test.schedulertestapp.TestTask;
 import ang.test.schedulertestapp.timeout.LongRunningTask;
-import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,14 +14,13 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@SpringBootTest(properties = {"task.timeout.value=3", "task.timeout.unit=SECONDS"})
+@SpringBootTest(properties = {"task.timeout.value=4", "task.timeout.unit=SECONDS"})
 @ExtendWith(OutputCaptureExtension.class)
 class SchedulerServiceTest {
     @Autowired
     private SchedulerService schedulerService;
 
     @Test
-    @Order(1)
     void scheduleOnDemand(CapturedOutput capturedOutput) throws InterruptedException {
         String message = "I'm so confused";
         TestTask task = new TestTask(message);
@@ -36,7 +34,6 @@ class SchedulerServiceTest {
     }
 
     @Test
-    @Order(2)
     void scheduleOnDemandWithCron(CapturedOutput capturedOutput) throws InterruptedException {
         String message = "My life moves faster than me";
         TestTask task = new TestTask(message);
@@ -55,7 +52,6 @@ class SchedulerServiceTest {
     }
 
     @Test
-    @Order(3)
     void scheduleCronTask(CapturedOutput capturedOutput) throws InterruptedException {
         String message = "Can't feel the ground beneath my feet";
         TestTask task = new TestTask(message);
@@ -74,7 +70,6 @@ class SchedulerServiceTest {
     }
 
     @Test
-    @Order(4)
     void scheduleLongTask(CapturedOutput capturedOutput) throws InterruptedException {
         String message = "Long running task";
         LongRunningTask task = new LongRunningTask(message);
@@ -92,7 +87,6 @@ class SchedulerServiceTest {
     }
 
     @Test
-    @Order(5)
     void cancelCronTaskTest(CapturedOutput capturedOutput) throws InterruptedException {
         String message = "Cron task";
         TestTask task = new TestTask(message);
@@ -112,5 +106,24 @@ class SchedulerServiceTest {
         // wait to check if the task does not fire and is truly canceled
         Thread.sleep(2000);
         assertEquals(1, task.getCounter());
+    }
+    @Test
+    void cancelRunningTask(CapturedOutput capturedOutput) throws InterruptedException {
+        String message = "Long running task";
+        LongRunningTask task = new LongRunningTask(message);
+        UUID taskId = UUID.randomUUID();
+        schedulerService.scheduleOnDemandTask(taskId, task);
+
+        // let the task run for some time
+        Thread.sleep(1000);
+        // check that the execution has started
+        assertTrue(capturedOutput.getAll().contains(message));
+
+        // cancel the task while it is running
+        assertTrue(schedulerService.cancelTask(taskId));
+        assertTrue(capturedOutput.getAll().contains("Task with id " + taskId + " was cancelled"));
+
+        // check if the interrupt was caught inside the long-running task
+        assertTrue(capturedOutput.getAll().contains("Task interrupted"));
     }
 }
