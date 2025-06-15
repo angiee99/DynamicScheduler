@@ -17,11 +17,10 @@ public class NonBlockingTimeoutWrapper implements TimeoutWrapper{
         Future<?> future = executor.submit(runnable);
 
         executor.schedule(() -> {
-            if (!future.isDone()) {
                 future.cancel(true);
                 System.out.println("Task timed out. CancelTask is called");
-            }
-        }, timeout, timeUnit);
+                },
+                timeout, timeUnit);
 
         return future;
     }

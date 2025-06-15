@@ -33,7 +33,7 @@ public class NonBlockingTimeoutWrapperTest {
     @Order(1)
     void taskFinishesBeforeTimeout(CapturedOutput capturedOutput) throws ExecutionException, InterruptedException {
         String message = "Apfel Shorle";
-        Future runnable = nonBlockingTimeoutWrapper.wrap(new TestTask(message), 2, TimeUnit.SECONDS);
+        Future<?> runnable = nonBlockingTimeoutWrapper.wrap(new TestTask(message), 2, TimeUnit.SECONDS);
         runnable.get();
         assertTrue(capturedOutput.getAll().contains(message));
         assertFalse(capturedOutput.getAll().contains(TIMEOUT_MESSAGE));
