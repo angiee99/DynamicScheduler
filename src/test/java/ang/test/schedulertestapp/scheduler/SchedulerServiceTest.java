@@ -136,4 +136,59 @@ class SchedulerServiceTest {
         // check if the interrupt was caught inside the long-running task
         assertTrue(capturedOutput.getAll().contains("Task interrupted"));
     }
+
+    @Test
+    @Order(7)
+    void updatePendingTask(CapturedOutput capturedOutput) throws InterruptedException {
+        String originalMessage = "Original task logic";
+        String updatedMessage = "Updated task logic";
+
+        TestTask originalTask = new TestTask(originalMessage);
+        UUID taskId = UUID.randomUUID();
+
+        // Schedule the task with some delay so we have time to update it
+        schedulerService.scheduleOnDemandTask(taskId, originalTask, CronExpression.parse("*/2 * * * * *")); // runs every 2 seconds
+
+        // Wait a bit less than 2 sec so it's still pending
+        Thread.sleep(500);
+
+        // Update the task logic before it fires
+        TestTask updatedTask = new TestTask(updatedMessage);
+        boolean updated = schedulerService.updateTask(taskId, updatedTask);
+
+        assertTrue(updated, "The update should succeed while task is pending");
+
+        // Now wait long enough for the updated task to execute
+        Thread.sleep(2000);
+
+        // Verify the original logic didn't run
+        assertFalse(capturedOutput.getAll().contains(originalMessage));
+        assertEquals(0, originalTask.getCounter());
+
+        // Verify the updated logic ran
+        assertTrue(capturedOutput.getAll().contains(updatedMessage));
+        assertEquals(1, updatedTask.getCounter());
+    }
+
+    @Test
+    @Order(8)
+    void updateRunningTaskFails(CapturedOutput capturedOutput) throws InterruptedException {
+        String originalMessage = "Running task";
+        LongRunningTask task = new LongRunningTask(originalMessage);
+        UUID taskId = UUID.randomUUID();
+
+        // Schedule without delay so it runs immediately
+        schedulerService.scheduleOnDemandTask(taskId, task);
+
+        // let the task run for some time
+        Thread.sleep(1000);
+
+        // Attempt to update while running
+        boolean updated = schedulerService.updateTask(taskId, () -> System.out.println("New logic"));
+
+        assertFalse(updated, "Cannot update task " + taskId + " — task is currently running");
+
+        // Ensure original task still ran
+        assertTrue(capturedOutput.getAll().contains(originalMessage));
+    }
 }

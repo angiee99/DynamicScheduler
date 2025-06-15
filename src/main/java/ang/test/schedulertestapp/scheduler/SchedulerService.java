@@ -20,5 +20,7 @@ public interface SchedulerService {
 
     // cancel the task
     boolean cancelTask(UUID taskId);
-    // todo update the task
+
+    // update the task
+    boolean updateTask(UUID taskId, Runnable newTaskLogic);
 }

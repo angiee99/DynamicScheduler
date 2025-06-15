@@ -134,6 +134,40 @@ public class SchedulerServiceImpl implements SchedulerService {
         return false;
     }
 
+    @Override
+    public boolean updateTask(UUID taskId, Runnable newTaskLogic) {
+        ScheduledTaskHandle handle = scheduledTasks.get(taskId);
+        if (handle == null) {
+            System.out.println("No task found with id: " + taskId);
+            return false;
+        }
+
+        // check that the task is not currently running
+        Future<?> runningFuture = handle.getRunningTaskFuture();
+        if (runningFuture != null && !runningFuture.isDone()) {
+            System.out.println("Cannot update task " + taskId + " — task is currently running");
+            return false;
+        }
+
+        // cancel the scheduled trigger (if not already fired)
+        ScheduledFuture<?> scheduledFuture = handle.getScheduledTrigger();
+        if (scheduledFuture != null && !scheduledFuture.isDone()) {
+            scheduledFuture.cancel(false);  // don't interrupt if somehow started
+        }
+
+        // TODO reschedule differently based on task type - on-demand with/without delay, cron task
+        // reschedule with the new logic at the same scheduled time (if available)
+        // for simplicity, reschedule immediately — or you can enhance to reuse timing data if you store it
+        ScheduledFuture<?> newTrigger = taskScheduler.schedule(() -> {
+            Future<?> newRunning = timeoutWrapper.wrap(newTaskLogic, defaultTimeout, defaultTimeoutUnit);
+            handle.setRunningTaskFuture(newRunning);
+        }, Instant.now());
+
+        handle.setScheduledTrigger(newTrigger);
+        System.out.println("Task " + taskId + " updated and rescheduled");
+        return true;
+    }
+
     @PreDestroy
     public void shutdown() {
         System.out.println("Shutting down the Scheduler service...");
