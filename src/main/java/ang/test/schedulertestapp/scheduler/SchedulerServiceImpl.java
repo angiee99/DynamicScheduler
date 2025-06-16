@@ -14,7 +14,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.*;
 
 /**
@@ -29,7 +28,7 @@ public class SchedulerServiceImpl implements SchedulerService {
     private final TimeoutWrapper timeoutWrapper;
     private final long defaultTimeout;
     private final TimeUnit defaultTimeoutUnit;
-    private final Map<UUID, ScheduledTaskHandle> scheduledTasks = new ConcurrentHashMap<>();
+    private final Map<Long, ScheduledTaskHandle> scheduledTasks = new ConcurrentHashMap<>();
 
     @Autowired
     public SchedulerServiceImpl(
@@ -44,7 +43,7 @@ public class SchedulerServiceImpl implements SchedulerService {
     }
 
     @Override
-    public void scheduleOnDemandTask(UUID taskId, Runnable taskLogic) {
+    public void scheduleOnDemandTask(Long taskId, Runnable taskLogic) {
         ScheduledTaskHandle handle = new ScheduledTaskHandle();
         ScheduledFuture<?> triggerFuture = taskScheduler.schedule(
                 () -> {
@@ -57,7 +56,7 @@ public class SchedulerServiceImpl implements SchedulerService {
     }
 
     @Override
-    public void scheduleOnDemandTask(UUID taskId, Runnable taskLogic, CronExpression cronExpression) {
+    public void scheduleOnDemandTask(Long taskId, Runnable taskLogic, CronExpression cronExpression) {
         ScheduledTaskHandle handle = new ScheduledTaskHandle();
         // calculate the delay based on the provided cron expression
         LocalDateTime nextExecution = cronExpression.next(LocalDateTime.now());
@@ -80,7 +79,7 @@ public class SchedulerServiceImpl implements SchedulerService {
     }
 
     @Override
-    public void scheduleCronTask(UUID taskId, Runnable taskLogic, CronExpression expression) {
+    public void scheduleCronTask(Long taskId, Runnable taskLogic, CronExpression expression) {
         ScheduledTaskHandle handle = new ScheduledTaskHandle();
         ScheduledFuture<?> triggerFuture = taskScheduler.schedule(
                 () -> {
@@ -98,7 +97,7 @@ public class SchedulerServiceImpl implements SchedulerService {
      * @return true if a task was canceled
      */
     @Override
-    public boolean cancelTask(UUID taskId) {
+    public boolean cancelTask(Long taskId) {
         // cancel the running task if any
         boolean canceledRunning = cancelRunningInstance(taskId);
 
@@ -110,7 +109,7 @@ public class SchedulerServiceImpl implements SchedulerService {
         return canceledRunning && canceledFutureFirings;
     }
 
-    private boolean cancelRunningInstance(UUID taskId){
+    private boolean cancelRunningInstance(Long taskId){
         ScheduledTaskHandle handle = scheduledTasks.get(taskId);
         if (handle != null) {
             if (handle.getRunningTaskFuture() != null) {
@@ -122,7 +121,7 @@ public class SchedulerServiceImpl implements SchedulerService {
         return false;
     }
 
-    boolean cancelFutureFirings(UUID taskId){
+    boolean cancelFutureFirings(Long taskId){
         ScheduledTaskHandle handle = scheduledTasks.get(taskId);
         if (handle != null) {
             if (handle.getScheduledTrigger() != null) {
@@ -135,7 +134,7 @@ public class SchedulerServiceImpl implements SchedulerService {
     }
 
     @Override
-    public boolean updateTask(UUID taskId, Runnable newTaskLogic) {
+    public boolean updateTask(Long taskId, Runnable newTaskLogic) {
         ScheduledTaskHandle handle = scheduledTasks.get(taskId);
         if (handle == null) {
             System.out.println("No task found with id: " + taskId);
@@ -156,6 +155,7 @@ public class SchedulerServiceImpl implements SchedulerService {
         }
 
         // TODO reschedule differently based on task type - on-demand with/without delay, cron task
+        // mb pass old task here to get the type and scheduled timestamp
         // reschedule with the new logic at the same scheduled time (if available)
         // for simplicity, reschedule immediately — or you can enhance to reuse timing data if you store it
         ScheduledFuture<?> newTrigger = taskScheduler.schedule(() -> {

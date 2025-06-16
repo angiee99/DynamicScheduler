@@ -13,7 +13,7 @@ import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.scheduling.support.CronExpression;
 
-import java.util.UUID;
+import java.util.Random;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -29,7 +29,7 @@ class SchedulerServiceTest {
     void scheduleOnDemand(CapturedOutput capturedOutput) throws InterruptedException {
         String message = "I'm so confused";
         TestTask task = new TestTask(message);
-        schedulerService.scheduleOnDemandTask(UUID.randomUUID(), task);
+        schedulerService.scheduleOnDemandTask(new Random().nextLong(), task);
         Thread.sleep(1000); // wait 1 second for the task execution
 
         // check for the message in stdout
@@ -44,7 +44,7 @@ class SchedulerServiceTest {
         String message = "My life moves faster than me";
         TestTask task = new TestTask(message);
         schedulerService.scheduleOnDemandTask(
-                UUID.randomUUID(),
+                new Random().nextLong(),
                 task,
                 CronExpression.parse("*/2 * * * * *")); // 2-second delay
         // test that it does not fire immediately
@@ -63,7 +63,7 @@ class SchedulerServiceTest {
         String message = "Can't feel the ground beneath my feet";
         TestTask task = new TestTask(message);
         schedulerService.scheduleCronTask(
-                UUID.randomUUID(),
+                new Random().nextLong(),
                 task,
                 CronExpression.parse("*/2 * * * * *")); // every 2 seconds
 
@@ -81,7 +81,7 @@ class SchedulerServiceTest {
     void scheduleLongTask(CapturedOutput capturedOutput) throws InterruptedException {
         String message = "Long running task";
         LongRunningTask task = new LongRunningTask(message);
-        schedulerService.scheduleOnDemandTask(UUID.randomUUID(), task);
+        schedulerService.scheduleOnDemandTask(new Random().nextLong(), task);
 
         // waiting for the timeout to fire
         Thread.sleep(4500);
@@ -99,7 +99,7 @@ class SchedulerServiceTest {
     void cancelCronTaskTest(CapturedOutput capturedOutput) throws InterruptedException {
         String message = "Cron task";
         TestTask task = new TestTask(message);
-        UUID taskId = UUID.randomUUID();
+        Long taskId = new Random().nextLong();
         schedulerService.scheduleCronTask(
                 taskId,
                 task,
@@ -121,7 +121,7 @@ class SchedulerServiceTest {
     void cancelRunningTask(CapturedOutput capturedOutput) throws InterruptedException {
         String message = "Long running task";
         LongRunningTask task = new LongRunningTask(message);
-        UUID taskId = UUID.randomUUID();
+        Long taskId = new Random().nextLong();
         schedulerService.scheduleOnDemandTask(taskId, task);
 
         // let the task run for some time
@@ -144,7 +144,7 @@ class SchedulerServiceTest {
         String updatedMessage = "Updated task logic";
 
         TestTask originalTask = new TestTask(originalMessage);
-        UUID taskId = UUID.randomUUID();
+        Long taskId = new Random().nextLong();
 
         // Schedule the task with some delay so we have time to update it
         schedulerService.scheduleOnDemandTask(taskId, originalTask, CronExpression.parse("*/2 * * * * *")); // runs every 2 seconds
@@ -175,7 +175,7 @@ class SchedulerServiceTest {
     void updateRunningTaskFails(CapturedOutput capturedOutput) throws InterruptedException {
         String originalMessage = "Running task";
         LongRunningTask task = new LongRunningTask(originalMessage);
-        UUID taskId = UUID.randomUUID();
+        Long taskId = new Random().nextLong();
 
         // Schedule without delay so it runs immediately
         schedulerService.scheduleOnDemandTask(taskId, task);
